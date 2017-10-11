@@ -18,7 +18,7 @@ namespace log4stash.Filters
         }
 
         public bool FlattenJson { get; set; }
-
+		public bool PreservePrimitiveArray { get; set; }
         public string Separator { get; set; }
 
         public JsonFilter()
