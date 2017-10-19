@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using log4stash.Extensions;
 using log4stash.SmartFormatters;
 using Newtonsoft.Json.Linq;
@@ -64,35 +64,34 @@ namespace log4stash.Filters
 
                 case JTokenType.Array:
                     var index = 0;
-					bool arrObj = false;
-					if (PreservePrimitiveArray)
+		    bool arrObj = false;
+		    if (PreservePrimitiveArray)
+			{
+				foreach (var child in token.Children<JObject>())
+				{
+					// check if its an array of objects
+					if (child.Type == JTokenType.Object)
 					{
-						foreach (var child in token.Children<JObject>())
-						{
-							// check if its an array of objects
-							if (child.Type == JTokenType.Object)
-							{
-								ScanToken(logEvent, child.Value<JToken>(), Join(prefix, index.ToString()));
-								index++;
-								arrObj = true;
-								break;
-							}
-						}
-						if (!arrObj)
-						{
-							logEvent.Add(prefix, token);
-						}
+						ScanToken(logEvent, child.Value<JToken>(), Join(prefix, index.ToString()));
+						index++;
+						arrObj = true;
+						break;
 					}
-					else
-					{
-						foreach (var child in token.Children())
-						{
-							ScanToken(logEvent, child, Join(prefix, index.ToString()));
-							index++;
-						}
-					}
-					break;
-
+				}
+				if (!arrObj)
+				{
+					logEvent.Add(prefix, token);
+				}
+			}
+			else
+			{
+				foreach (var child in token.Children())
+				{
+					ScanToken(logEvent, child, Join(prefix, index.ToString()));
+					index++;
+				}
+			}
+			break;
 
                 default:
                     var value = ((JValue)token).Value;
