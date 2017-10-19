@@ -18,13 +18,14 @@ namespace log4stash.Filters
         }
 
         public bool FlattenJson { get; set; }
-
+        public bool PreservePrimitiveArray { get; set; }
         public string Separator { get; set; }
 
         public JsonFilter()
         {
             SourceKey = "JsonRaw";
             FlattenJson = false;
+            PreservePrimitiveArray = false;
             Separator = DefaultSeparator;
         }
 
@@ -63,12 +64,35 @@ namespace log4stash.Filters
 
                 case JTokenType.Array:
                     var index = 0;
-                    foreach (var child in token.Children())
-                    {
-                        ScanToken(logEvent, child, Join(prefix, index.ToString()));
-                        index++;
-                    }
-                    break;
+					bool arrObj = false;
+					if (PreservePrimitiveArray)
+					{
+						foreach (var child in token.Children<JObject>())
+						{
+							// check if its an array of objects
+							if (child.Type == JTokenType.Object)
+							{
+								ScanToken(logEvent, child.Value<JToken>(), Join(prefix, index.ToString()));
+								index++;
+								arrObj = true;
+								break;
+							}
+						}
+						if (!arrObj)
+						{
+							logEvent.Add(prefix, token);
+						}
+					}
+					else
+					{
+						foreach (var child in token.Children())
+						{
+							ScanToken(logEvent, child, Join(prefix, index.ToString()));
+							index++;
+						}
+					}
+					break;
+
 
                 default:
                     var value = ((JValue)token).Value;
